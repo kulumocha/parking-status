@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>駐車場混雑状況チェック</title>
+<style>
+  :root {
+    --bg: #FFF9EE;
+    --card: #FFFFFF;
+    --accent: #FF8A3D;
+    --accent2: #4DA6FF;
+    --text: #333333;
+    --sub: #888888;
+    --empty: #3CB878;
+    --full: #E5484D;
+    --crowd: #F5A623;
+    --closed: #999999;
+    --stop: #BBBBBB;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: linear-gradient(160deg, #FFF9EE 0%, #FFEFD9 100%);
+    color: var(--text);
+    padding: 24px 16px 48px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center;
+    color: var(--sub);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .refresh-bar {
+    max-width: 480px;
+    margin: 0 auto 20px;
+    display: flex;
+    justify-content: center;
+  }
+  .refresh-btn {
+    background: white;
+    border: 1px solid #FFCB8E;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .refresh-btn:active { opacity: 0.7; }
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 14px rgba(255, 138, 61, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid #FFE3C2;
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .updated {
+    font-size: 11px;
+    color: var(--sub);
+    font-weight: 400;
+  }
+  .card p.desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--sub);
+  }
+  .lot-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #FFF7EC;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: white;
+  }
+  .status-badge.empty { background: var(--empty); }
+  .status-badge.full { background: var(--full); }
+  .status-badge.crowd { background: var(--crowd); }
+  .status-badge.closed { background: var(--closed); }
+  .status-badge.stop, .status-badge.loading { background: var(--stop); }
+  .lot-group { display: flex; flex-direction: column; gap: 6px; }
+  .lot-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 4px;
+  }
+  .status-img {
+    height: 26px;
+    border-radius: 4px;
+  }
+  .links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  a.btn {
+    text-decoration: none;
+    background: var(--accent);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
+  }
+  a.btn.secondary {
+    background: var(--accent2);
+  }
+  .note {
+    max-width: 480px;
+    margin: 24px auto 0;
+    font-size: 12px;
+    color: var(--sub);
+    line-height: 1.6;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px dashed #FFCB8E;
+  }
+</style>
+</head>
+<body>
+  <h1>🚗 駐車場混雑状況チェック</h1>
+  <div class="sub">3施設のリアルタイム満空情報をまとめて表示するで</div>
+
+  <div class="refresh-bar">
+    <button class="refresh-btn" onclick="loadAll()">🔄 今すぐ更新</button>
+  </div>
+
+  <div class="cards">
+
+    <!-- セブンパーク天美（松原） -->
+    <div class="card">
+      <h2>セブンパーク天美（松原）</h2>
+      <p class="desc">平面（南・北）と立体（屋上・5階・4階）の満空を画像でリアルタイム表示</p>
+
+      <div class="lot-group">
+        <div class="lot-group-title">平面駐車場</div>
+        <div class="lot-row"><span>南エリア</span><img class="status-img" src="https://cnt.parkingweb.jp/000500/000526/000001/003/0526parking_status.jpg" alt="南エリア満空状況" loading="lazy"></div>
+        <div class="lot-row"><span>北エリア</span><img class="status-img" src="https://cnt.parkingweb.jp/000500/000526/000001/002/0526parking_status.jpg" alt="北エリア満空状況" loading="lazy"></div>
+      </div>
+
+      <div class="lot-group">
+        <div class="lot-group-title">立体駐車場</div>
+        <div class="lot-row"><span>屋上</span><img class="status-img" src="https://cnt.parkingweb.jp/000500/000526/000001/007/0526parking_status.jpg" alt="屋上満空状況" loading="lazy"></div>
+        <div class="lot-row"><span>5階</span><img class="status-img" src="https://cnt.parkingweb.jp/000500/000526/000001/006/0526parking_status.jpg" alt="5階満空状況" loading="lazy"></div>
+        <div class="lot-row"><span>4階</span><img class="status-img" src="https://cnt.parkingweb.jp/000500/000526/000001/005/0526parking_status.jpg" alt="4階満空状況" loading="lazy"></div>
+      </div>
+
+      <div class="links">
+        <a class="btn" href="https://amami.sevenpark.jp/information/access" target="_blank">公式ページで見る（画像が出ない場合はこちら）</a>
+        <a class="btn secondary" href="https://amami.sevenpark.jp/st/congestion/" target="_blank">施設内混雑（人出）</a>
+      </div>
+    </div>
+
+    <!-- 堺 -->
+    <div class="card">
+      <h2>ららぽーと堺 <span class="updated" id="sakai-updated">読み込み中…</span></h2>
+      <div class="lot-row"><span>屋上駐車場</span><span class="status-badge loading" id="sakai-roof">確認中</span></div>
+      <div class="lot-row"><span>メイン立体駐車場</span><span class="status-badge loading" id="sakai-main">確認中</span></div>
+      <div class="lot-row"><span>アネックス立体駐車場</span><span class="status-badge loading" id="sakai-annex">確認中</span></div>
+      <div class="lot-row"><span>平面駐車場</span><span class="status-badge loading" id="sakai-flat">確認中</span></div>
+      <div class="links">
+        <a class="btn" href="https://mitsui-shopping-park.com/lalaport/sakai/access/parking.html" target="_blank">公式ページで見る</a>
+      </div>
+    </div>
+
+    <!-- 門真 -->
+    <div class="card">
+      <h2>ららぽーと門真 <span class="updated" id="kadoma-updated">読み込み中…</span></h2>
+      <div class="lot-row"><span>西A平面駐車場</span><span class="status-badge loading" id="kadoma-pur">確認中</span></div>
+      <div class="lot-row"><span>西B平面駐車場</span><span class="status-badge loading" id="kadoma-yel">確認中</span></div>
+      <div class="lot-row"><span>西立体駐車場</span><span class="status-badge loading" id="kadoma-blu">確認中</span></div>
+      <div class="lot-row"><span>東立体駐車場</span><span class="status-badge loading" id="kadoma-red">確認中</span></div>
+      <div class="lot-row"><span>東平面駐車場</span><span class="status-badge loading" id="kadoma-gre">確認中</span></div>
+      <div class="links">
+        <a class="btn" href="https://mitsui-shopping-park.com/lalaport/kadoma/access/parking.html" target="_blank">公式ページで見る</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="note" id="fallback-note" style="display:none;">
+    ※門真・堺のリアルタイム取得がブロックされてる（CORS制限の可能性）。その場合は「公式ページで見る」ボタンから直接確認してな。
+  </div>
+
+<script>
+  const STATUS_MAP = {
+    "1": { label: "満車", cls: "full" },
+    "2": { label: "空車", cls: "empty" },
+    "5": { label: "混雑", cls: "crowd" },
+    "6": { label: "閉鎖", cls: "closed" },
+    "7": { label: "通信停止中", cls: "stop" }
+  };
+
+  function setBadge(id, code) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const info = STATUS_MAP[code] || { label: "不明", cls: "stop" };
+    el.textContent = info.label;
+    el.className = "status-badge " + info.cls;
+  }
+
+  function setError(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = "取得失敗";
+    el.className = "status-badge stop";
+  }
+
+  async function fetchStatus(url, badgeId) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      const xml = new DOMParser().parseFromString(text, "text/xml");
+      const fullStatus = xml.querySelector("FullStatus")?.textContent?.trim();
+      setBadge(badgeId, fullStatus);
+      return xml.querySelector("UpdateDate")?.textContent?.trim() || null;
+    } catch (e) {
+      setError(badgeId);
+      document.getElementById("fallback-note").style.display = "block";
+      return null;
+    }
+  }
+
+  async function loadKadoma() {
+    const lots = [
+      ["https://cnt.parkingweb.jp/000500/000588/000006/001/0588parking_status.xml", "kadoma-pur"],
+      ["https://cnt.parkingweb.jp/000500/000588/000006/002/0588parking_status.xml", "kadoma-yel"],
+      ["https://cnt.parkingweb.jp/000500/000588/000007/001/0588parking_status.xml", "kadoma-blu"],
+      ["https://cnt.parkingweb.jp/000500/000588/000007/002/0588parking_status.xml", "kadoma-red"],
+      ["https://cnt.parkingweb.jp/000500/000588/000006/003/0588parking_status.xml", "kadoma-gre"]
+    ];
+    const dates = await Promise.all(lots.map(([url, id]) => fetchStatus(url, id)));
+    const latest = dates.filter(Boolean).sort().pop();
+    document.getElementById("kadoma-updated").textContent = latest ? latest : "";
+  }
+
+  async function loadSakai() {
+    const lots = [
+      ["https://cnt.parkingweb.jp/000500/000574/000001/001/0574parking_status.xml", "sakai-roof"],
+      ["https://cnt.parkingweb.jp/000500/000574/000001/002/0574parking_status.xml", "sakai-main"],
+      ["https://cnt.parkingweb.jp/000500/000574/000001/003/0574parking_status.xml", "sakai-annex"],
+      ["https://cnt.parkingweb.jp/000500/000574/000001/004/0574parking_status.xml", "sakai-flat"]
+    ];
+    const dates = await Promise.all(lots.map(([url, id]) => fetchStatus(url, id)));
+    const latest = dates.filter(Boolean).sort().pop();
+    document.getElementById("sakai-updated").textContent = latest ? latest : "";
+  }
+
+  function loadAll() {
+    document.getElementById("fallback-note").style.display = "none";
+    loadKadoma();
+    loadSakai();
+  }
+
+  loadAll();
+  setInterval(loadAll, 60000); // 60秒ごとに自動更新
+</script>
+</body>
+</html>
